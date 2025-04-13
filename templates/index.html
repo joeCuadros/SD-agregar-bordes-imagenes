@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subir Fotos</title>
+    <script src="https://unpkg.com/dropzone@5/dist/min/dropzone.min.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/dropzone@5/dist/min/dropzone.min.css" type="text/css" />
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js"></script>
+    <script>
+        const socket = io.connect('{{ request.host_url }}');
+
+        // funciones de conexion y desconexion
+        socket.on('disconnect', function () {
+            console.log('❌ Se perdio la conexion con el servidor');
+            document.getElementById('status').innerHTML = 'Status: Se ha perdido la conexion con el servidor';
+            document.getElementById('status').style.color = 'red';
+
+
+        });
+
+        socket.on('connect', function () {
+            console.log('🔌 Conectado al servidor');
+            document.getElementById('status').innerHTML = 'Status: Conectado al servidor';
+            document.getElementById('status').style.color = 'green';
+        });
+        // crear alertas
+        function crear_alertas(type, message) {
+            const alerts = document.getElementById('alerts');
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert ' + type;
+            alertDiv.innerHTML = message;
+            alertDiv.onclick = function () {
+                this.classList.add('hidden');
+            };
+            alerts.appendChild(alertDiv);
+        }
+        // recibir alertas
+        socket.on('alert_server', function (errorMessage) {
+            if (errorMessage && errorMessage.type) {
+                type = errorMessage.type;
+            } else {
+                type = 'alert danger';
+            }
+            message = errorMessage.message || 'Error desconocido';
+            crear_alertas(type, message);
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f7fc;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .dropzone {
+            background: #ffffff;
+            border: 2px dashed #3498db;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 600px;
+            min-height: 200px;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s ease, border-color 0.3s ease;
+        }
+
+        .dropzone:hover {
+            background-color: #ecf6fd;
+            border-color: #2980b9;
+        }
+
+        .dropzone .dz-message {
+            font-size: 1.2em;
+            color: #3498db;
+        }
+
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .dropzone {
+                width: 90%;
+                padding: 30px;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .dropzone {
+                width: 95%;
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+        }
+
+        /* Estilo para imagenes*/
+        .image-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .image-container img {
+            max-width: 30%;
+            height: auto;
+            max-height: 400px;
+        }
+
+        .image-container img:hover {
+            transform: scale(1.03);
+        }
+
+        @media (max-width: 768px) {
+            .image-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* inputs */
+        .inputs-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            width: 45%;
+        }
+
+        input[type="number"],
+        input[type="color"] {
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-top: 5px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            outline: none;
+            height: 10px;
+        }
+
+        input[type="number"]:focus,
+        input[type="color"]:focus {
+            border-color: #2980b9;
+            box-shadow: 0 0 5px rgba(41, 128, 185, 0.5);
+        }
+
+        input[type="color"] {
+            padding: 1px 1px;
+            height: 35px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+            font-size: 1em;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+    {% include 'alerts.html' %}
+    <h1>Colocar bordes a las imagenes </h1>
+    <form action="/upload" class="dropzone" id="my-dropzone"></form>
+
+    <!-- Contenedor para los inputs -->
+    <div class="inputs-container">
+        <div class="input-group">
+            <label for="border_width">Ancho del borde:</label>
+            <input type="number" name="border_width" id="border_width" min="0" value="10" onchange="reprocesarImagen()">
+        </div>
+
+        <div class="input-group">
+            <label for="border_color">Color del borde:</label>
+            <input type="color" name="border_color" id="border_color" value="#000000" onchange="reprocesarImagen()">
+        </div>
+        <p id="status"> Status: No info </p>
+    </div>
+    <div class="image-container">
+        <img id="before" src="" alt="Imagen actual" style="display: none;" onclick="descargar(this.src, '0')">
+        <img id="preview" src="" alt="Imagen procesada" style="display: none;" onclick="descargar(this.src, '1')">
+    </div>
+
+    <script>
+        function quitImages() {
+            const before = document.getElementById('before');
+            before.src = '';
+            before.style.display = 'none';
+            // renderizar la imagen procesada
+            const preview = document.getElementById('preview');
+            preview.src = '';
+            preview.style.display = 'none';
+        }
+
+        // funciones de dropzone
+        function removeProgress() {
+            const div = document.querySelector('.dz-progress');
+            if (div) {
+                div.remove();
+            }
+        }
+        // acciones
+        function reprocesarImagen() {
+            const file = myDropzone.lastUploadedFile;
+            if (!file) {
+                crear_alertas("danger", "No hay imagen cargada.")
+                return;
+            }
+            // actualiza con nuevos datos 
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const border_width = document.getElementById('border_width').value;
+                const border_color = document.getElementById('border_color').value;
+                socket.emit('upload_image', {
+                    image: event.target.result,
+                    border_width: border_width,
+                    border_color: border_color
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+        // descargar la imagen
+        function descargar(base64Image,type) {
+            const file = myDropzone.lastUploadedFile; //sacar el name
+            if (!file) {
+                crear_alertas("danger", "No hay imagen cargada.")
+                return;
+            }
+            
+            // Crear un enlace temporal
+            const link = document.createElement('a');
+            link.href = base64Image;
+            if (type == '0') {
+                link.download = `${myDropzone.lastUploadedFile.name}`;
+            } else {
+                link.download = `with_border_${myDropzone.lastUploadedFile.name}`;
+            }
+
+            // Simular el clic para descargar
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        Dropzone.autoDiscover = false;
+
+        var myDropzone = new Dropzone("#my-dropzone", {
+            url: "/upload",
+            paramName: "file",
+            maxFiles: 1, // Limitar la carga a solo 1 archivo
+            acceptedFiles: "image/*",
+            dictDefaultMessage: "Drag an image here or click to upload.",
+            autoProcessQueue: false, // No procesar automaticamente la cola
+            init: function () {
+                // evento de un nuevo archivo
+                this.on("addedfile", function (file) {
+                    myDropzone.lastUploadedFile = file;
+                    if (this.files.length > 1) {
+                        this.removeFile(this.files[0]);
+                    }
+                    const MAX_FILE_SIZE = '{{MAX_FILE_SIZE}}';
+                    // Demansiado grande
+                    if (file.size > MAX_FILE_SIZE) {
+                        // eliminar la barra de progreso
+                        removeProgress();
+                        // activar el ícono de error
+                        file.previewElement.classList.add('dz-error');
+                        const errorMark = file.previewElement.querySelector('.dz-error-mark');
+                        if (errorMark) errorMark.style.display = 'block';
+                        // mostrar el mensaje de error
+                        let errorMessage = file.previewElement.querySelector('[data-dz-errormessage]');
+                        if (errorMessage) {
+                            errorMessage.textContent = 'El tamaño del archivo es demasiado grande. Tamaño máximo: ';
+                        }
+                        quitImages();
+                        myDropzone.lastUploadedFile = null;
+                        return;
+                    }
+                    // Simular la barra de progreso
+                    let progress = 0;
+                    let dzProgress = file.previewElement.querySelector('[data-dz-uploadprogress]');
+                    dzProgress.style.width = '0%';
+                    let interval = setInterval(() => {
+                        progress += 5;
+                        if (progress <= 90) {
+                            dzProgress.style.width = progress + '%';
+                        } else {
+                            clearInterval(interval);
+                        }
+                    }, 150)
+                    // mandar la imagen al servidor
+                    var reader = new FileReader();
+                    reader.onload = function (event) {
+                        border_width = document.getElementById('border_width').value;
+                        border_color = document.getElementById('border_color').value;
+                        socket.emit('upload_image', { image: event.target.result, border_width: border_width, border_color: border_color }); //mandar datos al servidor
+                        file._interval = interval;
+                        file._progressBar = dzProgress;
+                    };
+                    reader.readAsDataURL(file);
+                });
+            }
+        });
+        // metodo para renderizar la imagen procesada
+        socket.on('image_processed', function (data) {
+            let file = myDropzone.files[0];
+            if (file && file._progressBar) {
+                clearInterval(file._interval);
+            }
+
+            if (file.previewElement) {
+                // eliminar la barra de progreso
+                removeProgress();
+                // activar el check de exito
+                file.previewElement.classList.add('dz-success');
+                const status = file.previewElement.querySelector('.dz-success-mark');
+                if (status) status.style.display = 'block';
+            }
+            // renderizar la imagen antes
+            const before = document.getElementById('before');
+            before.src = data.before;
+            before.style.display = 'block';
+            // renderizar la imagen procesada
+            const preview = document.getElementById('preview');
+            preview.src = data.after;
+            preview.style.display = 'block';
+        });
+        // Manejador de error de la imagen
+        socket.on('image_error', function (data) {
+            let file = myDropzone.files[0];
+
+            if (file && file._progressBar) {
+                clearInterval(file._interval);
+            }
+            if (file.previewElement) {
+                // eliminar la barra de progreso
+                removeProgress();
+
+                // activar el ícono de error
+                file.previewElement.classList.add('dz-error');
+                const errorMark = file.previewElement.querySelector('.dz-error-mark');
+                if (errorMark) errorMark.style.display = 'block';
+                // mostrar el mensaje de error
+                let errorMessage = file.previewElement.querySelector('[data-dz-errormessage]');
+                if (errorMessage) {
+                    errorMessage.textContent = data.message || 'Error desconocido';
+                }
+            }
+            quitImages();
+
+        });
+    </script>
+</body>
+
+</html>
