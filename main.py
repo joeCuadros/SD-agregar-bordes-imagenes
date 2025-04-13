@@ -21,6 +21,7 @@ users = {
     'misael': {'id': 2,'password': 'scrypt:32768:8:1$LPOUjOJrmGFshjyD$724a223d766c805912eee91f02b24214c6fd427d9645fae3bbb857f2e67aa3badd1e6b23f5c8073ee5839f17dd0307a40e062864449edbd0e6ef379aadb94dba'},
     'sebastian': {'id': 3,'password': 'scrypt:32768:8:1$x81vogaNFuwwWboO$ec5c0a2a8c1a6f3362ec0faf2347f1885b99584d0265eeadfce52df5c401cc699f5e5a9536ec18c3da6281238e79a29e5b261675c9d52d99e765ff6d9064040a'},
     'rodrigo': {'id': 4,'password': 'scrypt:32768:8:1$sXzsAW3BMK2QRA5F$23be256b413782396d45f28ca790eadf54474f21a31a8fcf4467c7b738e09a4bffc75b2ce333f51ad8b7800e307a85e5a371efe5a4d636b96021b5eed5b8e02f'},
+    'marco': {'id': 5,'password': 'scrypt:32768:8:1$TOCLPcuSqNsu0zry$f66cca588c11a863b7ec2bfaada9918cd0b0b0c871dcf5106fc77f3a2760551abae3de5fa162adbaebee93f42fe12914bd01926cadac211b6ef76722e2de15a9'},
 }
 
 # Decorador para proteger las rutas privadas
